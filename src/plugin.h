@@ -18,44 +18,40 @@
 #include <KXMLGUIClient>
 #include <QString>
 
-class KateOllamaPlugin : public KTextEditor::Plugin
-{
-    Q_OBJECT
+class KateOllamaPlugin : public KTextEditor::Plugin {
+  Q_OBJECT
 
-public:
-    explicit KateOllamaPlugin(QObject *parent, const QVariantList & = QVariantList());
+ public:
+  explicit KateOllamaPlugin(QObject* parent, const QVariantList& = QVariantList());
 
-    QObject *createToolWindow(KTextEditor::MainWindow *mainWindow);
-    QObject *createView(KTextEditor::MainWindow *mainWindow) override;
+  QObject* createToolWindow(KTextEditor::MainWindow* mainWindow);
+  QObject* createView(KTextEditor::MainWindow* mainWindow) override;
 
-    void readSettings();
+  void readSettings();
 
-    int configPages() const override
-    {
-        return 1;
-    }
+  int configPages() const override { return 1; }
 
-    KTextEditor::ConfigPage *configPage(int number = 0, QWidget *parent = nullptr) override;
+  KTextEditor::ConfigPage* configPage(int number = 0, QWidget* parent = nullptr) override;
 
-    void setModel(QString model);
-    QString getModel();
+  void setModel(QString model);
+  QString getModel();
 
-    void setSystemPrompt(QString systemPrompt);
-    QString getSystemPrompt();
+  void setSystemPrompt(QString systemPrompt);
+  QString getSystemPrompt();
 
-    void setOllamaUrl(QString ollamaUrl);
-    QString getOllamaUrl();
+  void setOllamaUrl(QString ollamaUrl);
+  QString getOllamaUrl();
 
-    void setOllamaData(OllamaData ollamaData);
-    OllamaData getOllamaData();
+  void setOllamaData(OllamaData ollamaData);
+  OllamaData getOllamaData();
 
-private:
-    QString model_;
-    QString systemPrompt_;
-    QString ollamaUrl_;
+ private:
+  QString model_;
+  QString systemPrompt_;
+  QString ollamaUrl_;
 
-    OllamaData ollamaData_;
-    OllamaSystem *ollamaSystem_;
+  OllamaData ollamaData_;
+  OllamaSystem* ollamaSystem_;
 };
 
 #endif // KATEOLLAMAPLUGIN_H

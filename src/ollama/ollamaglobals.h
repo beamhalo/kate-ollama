@@ -10,17 +10,16 @@
 #include <QObject>
 #include <QString>
 
-class OllamaGlobals : public QObject
-{
-    Q_OBJECT
+class OllamaGlobals : public QObject {
+  Q_OBJECT
 
-public:
-    static QString PluginName;
-    static QString IconName;
+ public:
+  static QString PluginName;
+  static QString IconName;
 
-    static QString HelpText;
+  static QString HelpText;
 
-    static QString LabelOllamaEndpointOverride;
+  static QString LabelOllamaEndpointOverride;
 };
 
 #endif // OLLAMAGLOBALS_H

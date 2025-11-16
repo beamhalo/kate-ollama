@@ -12,6 +12,8 @@
 #include <KTextEditor/Message>
 #include <KXMLGUIClient>
 
+#include <qevent.h>
+#include <qlist.h>
 #include <QComboBox>
 #include <QHBoxLayout>
 #include <QLabel>
@@ -23,8 +25,6 @@
 #include <QSplitter>
 #include <QVBoxLayout>
 #include <QWidget>
-#include <qevent.h>
-#include <qlist.h>
 
 #include "src/ollama/ollamaresponse.h"
 #include "src/ollama/ollamasystem.h"
@@ -32,66 +32,70 @@
 #include "src/ui/controls//qollamaplaintextedit.h"
 #include "src/ui/widgets/toolwidget.h"
 
-class MainTab : public QWidget, public KXMLGUIClient
-{
-    Q_OBJECT
+class MainTab
+  : public QWidget
+  , public KXMLGUIClient {
+  Q_OBJECT
 
-public:
-    MainTab(KateOllamaPlugin *plugin, KTextEditor::MainWindow *mainWindow, OllamaSystem *ollamaSystem, OllamaToolWidget *parent = nullptr);
-    ~MainTab();
+ public:
+  MainTab(KateOllamaPlugin* plugin, KTextEditor::MainWindow* mainWindow, OllamaSystem* ollamaSystem,
+          OllamaToolWidget* parent = nullptr);
+  ~MainTab();
 
-public slots:
-    void handle_signalModelsListLoaded(const QList<QJsonValue> &modelsList);
-    // void handle_signalOnSinglePrompt();
-    // void handle_signalOnFullPrompt();
+ public slots:
+  void handle_signalModelsListLoaded(const QList<QJsonValue>& modelsList);
+  // void handle_signalOnSinglePrompt();
+  // void handle_signalOnFullPrompt();
 
-    void handle_signalOllamaRequestMetaDataChanged(OllamaResponse ollamaResponse);
-    void handle_signalOllamaRequestGotResponse(OllamaResponse ollamaResponse);
-    void handle_signalOllamaRequestFinished(OllamaResponse ollamaResponse);
+  void handle_signalOllamaRequestMetaDataChanged(OllamaResponse ollamaResponse);
+  void handle_signalOllamaRequestGotResponse(OllamaResponse ollamaResponse);
+  void handle_signalOllamaRequestFinished(OllamaResponse ollamaResponse);
 
-    void handle_signal_textAreaInputEnterKeyWasPressed(QKeyEvent *event);
-    void handle_signalOutputInEditorClicked();
+  void handle_signal_textAreaInputEnterKeyWasPressed(QKeyEvent* event);
+  void handle_signalOutputInEditorClicked();
 
-private:
-    void loadModels();
-    QString getPrompt();
-    void ollamaRequest(QString prompt);
+ private:
+  void loadModels();
+  QString getPrompt();
+  void ollamaRequest(QString prompt);
 
-    bool outputInEditor_;
+  bool outputInEditor_;
 
-    KTextEditor::MainWindow *mainWindow_ = nullptr;
+  KTextEditor::MainWindow* mainWindow_ = nullptr;
 
-    QVBoxLayout *mainLayout_;
+  QVBoxLayout* mainLayout_;
 
-    QWidget *leftWidget_;
-    QVBoxLayout *leftLayout_;
+  QWidget* leftWidget_;
+  QVBoxLayout* leftLayout_;
 
-    QList<QPushButton> *sessionButtons_; // These buttons need to be added based on the saved sessions.
-    // Need a custom control with a label and a button for deletion.
+  QList<QPushButton>*
+      sessionButtons_; // These buttons need to be added based on the saved sessions.
+  // Need a custom control with a label and a button for deletion.
 
-    QWidget *rightWidget_;
-    QVBoxLayout *rightLayout_; // this houses the main interface. We need to add the top, middle, bottom widget to it.
+  QWidget* rightWidget_;
+  QVBoxLayout* rightLayout_; // this houses the main interface. We need to add the top, middle,
+                             // bottom widget to it.
 
-    QSplitter *leftRightSplitter_; // the left and right widget need to be added here.
+  QSplitter* leftRightSplitter_; // the left and right widget need to be added here.
 
-    QWidget *topWidget_;
-    QHBoxLayout *topLayout_;
-    QComboBox *modelsComboBox_;
-    QPushButton *newTabBtn_;
+  QWidget* topWidget_;
+  QHBoxLayout* topLayout_;
+  QComboBox* modelsComboBox_;
+  QPushButton* newTabBtn_;
 
-    QWidget *middleWidget_;
-    QHBoxLayout *middleLayout_;
-    QSplitter *splitter_;
-    QOllamaPlainTextEdit *textAreaInput_;
-    QOllamaPlainTextEdit *textAreaOutput_;
+  QWidget* middleWidget_;
+  QHBoxLayout* middleLayout_;
+  QSplitter* splitter_;
+  QOllamaPlainTextEdit* textAreaInput_;
+  QOllamaPlainTextEdit* textAreaOutput_;
 
-    QWidget *bottomWidget_;
-    QHBoxLayout *bottomLayout_;
-    QLabel *label_override_ollama_endpoint_;
-    QLineEdit *line_edit_override_ollama_endpoint_;
-    QPushButton *outputInEditorPushButton_;
+  QWidget* bottomWidget_;
+  QHBoxLayout* bottomLayout_;
+  QLabel* label_override_ollama_endpoint_;
+  QLineEdit* line_edit_override_ollama_endpoint_;
+  QPushButton* outputInEditorPushButton_;
 
-    KateOllamaPlugin *plugin_;
-    OllamaSystem *ollamaSystem_;
+  KateOllamaPlugin* plugin_;
+  OllamaSystem* ollamaSystem_;
 };
 #endif // MAINTAB_H

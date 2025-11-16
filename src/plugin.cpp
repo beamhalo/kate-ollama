@@ -20,6 +20,8 @@
 #include <KXMLGUIClient>
 #include <KXMLGUIFactory>
 
+#include <ktexteditor/message.h>
+#include <qcontainerfwd.h>
 #include <QAction>
 #include <QDebug>
 #include <QJsonDocument>
@@ -30,92 +32,58 @@
 #include <QNetworkRequest>
 #include <QRegularExpression>
 #include <QString>
-#include <ktexteditor/message.h>
-#include <qcontainerfwd.h>
 
 #include <QLabel>
 #include <QVBoxLayout>
 #include <QVector>
 #include <QWidget>
 
-#include "ollama/ollamasystem.h"
 #include "plugin.h"
+#include "ollama/ollamasystem.h"
 
+#include "settings.h"
 #include "ollama/ollamadata.h"
 #include "ollama/ollamasystem.h"
-#include "settings.h"
 #include "ui/views/ollamaview.h"
 #include "ui/widgets/toolwidget.h"
 
 using namespace Qt::Literals::StringLiterals;
 
-K_PLUGIN_FACTORY_WITH_JSON(KateOllamaFactory, "kateollama.json", registerPlugin<KateOllamaPlugin>();)
+K_PLUGIN_FACTORY_WITH_JSON(KateOllamaFactory, "kateollama.json",
+                           registerPlugin<KateOllamaPlugin>();)
 
-enum MessageType {
-    Log,
-    Info,
-    Warn,
-    Error
-};
+enum MessageType { Log, Info, Warn, Error };
 
-KateOllamaPlugin::KateOllamaPlugin(QObject *parent, const QVariantList &)
-    : KTextEditor::Plugin(parent)
-{
-    ollamaSystem_ = new OllamaSystem(this);
+KateOllamaPlugin::KateOllamaPlugin(QObject* parent, const QVariantList&)
+  : KTextEditor::Plugin(parent) {
+  ollamaSystem_ = new OllamaSystem(this);
 }
 
-QObject *KateOllamaPlugin::createToolWindow(KTextEditor::MainWindow *mainWindow)
-{
-    return new OllamaToolWidget(this, mainWindow, ollamaSystem_);
+QObject* KateOllamaPlugin::createToolWindow(KTextEditor::MainWindow* mainWindow) {
+  return new OllamaToolWidget(this, mainWindow, ollamaSystem_);
 }
 
-QObject *KateOllamaPlugin::createView(KTextEditor::MainWindow *mainwindow)
-{
-    return new KateOllamaView(this, mainwindow, ollamaSystem_);
+QObject* KateOllamaPlugin::createView(KTextEditor::MainWindow* mainwindow) {
+  return new KateOllamaView(this, mainwindow, ollamaSystem_);
 }
 
-KTextEditor::ConfigPage *KateOllamaPlugin::configPage(int number, QWidget *parent)
-{
-    if (number != 0) {
-        return nullptr;
-    }
-    return new KateOllamaConfigPage(parent, this);
+KTextEditor::ConfigPage* KateOllamaPlugin::configPage(int number, QWidget* parent) {
+  if (number != 0) {
+    return nullptr;
+  }
+  return new KateOllamaConfigPage(parent, this);
 }
 
-void KateOllamaPlugin::setModel(QString model)
-{
-    model_ = model;
-}
-QString KateOllamaPlugin::getModel()
-{
-    return model_;
-}
+void KateOllamaPlugin::setModel(QString model) { model_ = model; }
+QString KateOllamaPlugin::getModel() { return model_; }
 
-void KateOllamaPlugin::setSystemPrompt(QString systemPrompt)
-{
-    systemPrompt_ = systemPrompt;
-}
-QString KateOllamaPlugin::getSystemPrompt()
-{
-    return systemPrompt_;
-}
+void KateOllamaPlugin::setSystemPrompt(QString systemPrompt) { systemPrompt_ = systemPrompt; }
+QString KateOllamaPlugin::getSystemPrompt() { return systemPrompt_; }
 
-void KateOllamaPlugin::setOllamaUrl(QString ollamaUrl)
-{
-    ollamaUrl_ = ollamaUrl;
-}
-QString KateOllamaPlugin::getOllamaUrl()
-{
-    return ollamaUrl_;
-}
+void KateOllamaPlugin::setOllamaUrl(QString ollamaUrl) { ollamaUrl_ = ollamaUrl; }
+QString KateOllamaPlugin::getOllamaUrl() { return ollamaUrl_; }
 
-void KateOllamaPlugin::setOllamaData(OllamaData ollamaData)
-{
-    ollamaData_ = ollamaData;
-}
-OllamaData KateOllamaPlugin::getOllamaData()
-{
-    return ollamaData_;
-}
+void KateOllamaPlugin::setOllamaData(OllamaData ollamaData) { ollamaData_ = ollamaData; }
+OllamaData KateOllamaPlugin::getOllamaData() { return ollamaData_; }
 
 #include <plugin.moc>

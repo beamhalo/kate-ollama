@@ -17,34 +17,36 @@
 
 class KateOllamaPlugin;
 
-class KateOllamaView : public QObject, public KXMLGUIClient
-{
-    Q_OBJECT
-public:
-    explicit KateOllamaView(KateOllamaPlugin *plugin, KTextEditor::MainWindow *mainwindow, OllamaSystem *ollamaSystem);
-    ~KateOllamaView();
+class KateOllamaView
+  : public QObject
+  , public KXMLGUIClient {
+  Q_OBJECT
+ public:
+  explicit KateOllamaView(KateOllamaPlugin* plugin, KTextEditor::MainWindow* mainwindow,
+                          OllamaSystem* ollamaSystem);
+  ~KateOllamaView();
 
-    QObject *createToolWindow(KTextEditor::MainWindow *mainWindow);
+  QObject* createToolWindow(KTextEditor::MainWindow* mainWindow);
 
-private slots:
-    void handle_onSinglePrompt();
-    void handle_onFullPrompt();
-    void handle_onPrintCommand();
+ private slots:
+  void handle_onSinglePrompt();
+  void handle_onFullPrompt();
+  void handle_onPrintCommand();
 
-    void handle_ollamaRequestMetaDataChanged(OllamaResponse ollamaResponse);
-    void handle_ollamaRequestGotResponse(OllamaResponse ollamaResponse);
-    void handle_ollamaRequestFinished(OllamaResponse ollamaResponse);
+  void handle_ollamaRequestMetaDataChanged(OllamaResponse ollamaResponse);
+  void handle_ollamaRequestGotResponse(OllamaResponse ollamaResponse);
+  void handle_ollamaRequestFinished(OllamaResponse ollamaResponse);
 
-private:
-    QString getPrompt();
-    void ollamaRequest(QString prompt);
+ private:
+  QString getPrompt();
+  void ollamaRequest(QString prompt);
 
-private:
-    KateOllamaPlugin *plugin_ = nullptr;
-    KTextEditor::MainWindow *mainWindow_ = nullptr;
-    OllamaToolWidget *toolWidget_ = nullptr;
-    std::unique_ptr<QWidget> toolview_;
-    OllamaSystem *ollamaSystem_;
+ private:
+  KateOllamaPlugin* plugin_            = nullptr;
+  KTextEditor::MainWindow* mainWindow_ = nullptr;
+  OllamaToolWidget* toolWidget_        = nullptr;
+  std::unique_ptr<QWidget> toolview_;
+  OllamaSystem* ollamaSystem_;
 };
 
 #endif // KATEOLLAMAVIEW_H

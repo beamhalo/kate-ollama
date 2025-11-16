@@ -15,24 +15,24 @@
 #include "src/ollama/ollamasystem.h"
 #include "src/plugin.h"
 
-class OllamaToolWidget : public QWidget
-{
-    Q_OBJECT
+class OllamaToolWidget : public QWidget {
+  Q_OBJECT
 
-public:
-    explicit OllamaToolWidget(KateOllamaPlugin *plugin, KTextEditor::MainWindow *mainWindow, OllamaSystem *ollamaSystem, QWidget *parent = nullptr);
+ public:
+  explicit OllamaToolWidget(KateOllamaPlugin* plugin, KTextEditor::MainWindow* mainWindow,
+                            OllamaSystem* ollamaSystem, QWidget* parent = nullptr);
 
-    virtual ~OllamaToolWidget();
+  virtual ~OllamaToolWidget();
 
-    // Add's a new tab
-    void newTab();
+  // Add's a new tab
+  void newTab();
 
-    void onViewChanged(KTextEditor::View *v);
+  void onViewChanged(KTextEditor::View* v);
 
-private:
-    KateOllamaPlugin *plugin_;
-    KTextEditor::MainWindow *mainWindow_ = nullptr;
-    QTabWidget tabWidget_;
-    OllamaSystem *ollamaSystem_;
+ private:
+  KateOllamaPlugin* plugin_;
+  KTextEditor::MainWindow* mainWindow_ = nullptr;
+  QTabWidget tabWidget_;
+  OllamaSystem* ollamaSystem_;
 };
 #endif // OLLAMATOOLWIDGET_HEADER_H

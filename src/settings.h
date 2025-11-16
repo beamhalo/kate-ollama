@@ -16,32 +16,31 @@ class QLineEdit;
 class QTextEdit;
 class QWidget;
 
-class KateOllamaConfigPage : public KTextEditor::ConfigPage
-{
-    Q_OBJECT
+class KateOllamaConfigPage : public KTextEditor::ConfigPage {
+  Q_OBJECT
 
-public:
-    explicit KateOllamaConfigPage(QWidget *parent = nullptr, KateOllamaPlugin *plugin = nullptr);
+ public:
+  explicit KateOllamaConfigPage(QWidget* parent = nullptr, KateOllamaPlugin* plugin = nullptr);
 
-    void loadSettings();
-    void fetchModelList();
+  void loadSettings();
+  void fetchModelList();
 
-public:
-    QString name() const override;
-    QString fullName() const override;
-    QIcon icon() const override;
+ public:
+  QString name() const override;
+  QString fullName() const override;
+  QIcon icon() const override;
 
-public:
-    void apply() override;
-    void defaults() override;
-    void reset() override;
+ public:
+  void apply() override;
+  void defaults() override;
+  void reset() override;
 
-private:
-    KateOllamaPlugin *const plugin_;
-    QComboBox *modelsComboBox_;
-    QTextEdit *systemPromptEdit_;
-    QLineEdit *ollamaURLText_;
-    QLabel *infoLabel_;
+ private:
+  KateOllamaPlugin* const plugin_;
+  QComboBox* modelsComboBox_;
+  QTextEdit* systemPromptEdit_;
+  QLineEdit* ollamaURLText_;
+  QLabel* infoLabel_;
 };
 
 #endif // KATEOLLAMACONFIGPAGE_H

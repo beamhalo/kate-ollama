@@ -10,16 +10,16 @@
 
 #include "src/ui/utilities/messages.h"
 
-void Messages::showStatusMessage(const QString &message, KTextEditor::Message::MessageType level, KTextEditor::MainWindow *mainWindow)
-{
-    KTextEditor::View *view = mainWindow->activeView();
-    if (!view || !view->document()) {
-        return;
-    }
+void Messages::showStatusMessage(const QString& message, KTextEditor::Message::MessageType level,
+                                 KTextEditor::MainWindow* mainWindow) {
+  KTextEditor::View* view = mainWindow->activeView();
+  if (!view || !view->document()) {
+    return;
+  }
 
-    auto kmsg = new KTextEditor::Message(message, level);
-    kmsg->setPosition(KTextEditor::Message::BottomInView);
-    kmsg->setAutoHide(500);
-    kmsg->setView(view);
-    view->document()->postMessage(kmsg);
+  auto kmsg = new KTextEditor::Message(message, level);
+  kmsg->setPosition(KTextEditor::Message::BottomInView);
+  kmsg->setAutoHide(500);
+  kmsg->setView(view);
+  view->document()->postMessage(kmsg);
 }
