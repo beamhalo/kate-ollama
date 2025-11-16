@@ -55,7 +55,7 @@ private:
     QString ollamaUrl_;
 
     OllamaData ollamaData_;
-    OllamaSystem *olamaSystem_;
+    OllamaSystem *ollamaSystem_;
 };
 
 #endif // KATEOLLAMAPLUGIN_H

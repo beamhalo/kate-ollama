@@ -31,6 +31,10 @@ QString OllamaData::getSender() const
 
 void OllamaData::setOllamaUrl(QString url)
 {
+    if (url.endsWith('/'))
+    {
+        url.removeLast();
+    }
     url_ = url;
 }
 QString OllamaData::getOllamaUrl() const

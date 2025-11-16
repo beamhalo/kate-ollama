@@ -61,17 +61,17 @@ enum MessageType {
 KateOllamaPlugin::KateOllamaPlugin(QObject *parent, const QVariantList &)
     : KTextEditor::Plugin(parent)
 {
-    olamaSystem_ = new OllamaSystem(this);
+    ollamaSystem_ = new OllamaSystem(this);
 }
 
 QObject *KateOllamaPlugin::createToolWindow(KTextEditor::MainWindow *mainWindow)
 {
-    return new OllamaToolWidget(this, mainWindow, olamaSystem_);
+    return new OllamaToolWidget(this, mainWindow, ollamaSystem_);
 }
 
 QObject *KateOllamaPlugin::createView(KTextEditor::MainWindow *mainwindow)
 {
-    return new KateOllamaView(this, mainwindow, olamaSystem_);
+    return new KateOllamaView(this, mainwindow, ollamaSystem_);
 }
 
 KTextEditor::ConfigPage *KateOllamaPlugin::configPage(int number, QWidget *parent)

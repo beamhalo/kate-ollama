@@ -177,7 +177,7 @@ void KateOllamaView::handle_ollamaRequestGotResponse(OllamaResponse ollamaRespon
 void KateOllamaView::handle_ollamaRequestFinished(OllamaResponse ollamaResponse)
 {
     if (ollamaResponse.getErrorMessage() != QString("")) {
-        Messages::showStatusMessage(QStringLiteral("Error encountered: ").arg(ollamaResponse.getErrorMessage()),
+        Messages::showStatusMessage(QStringLiteral("Error encountered: %0").arg(ollamaResponse.getErrorMessage()),
                                     KTextEditor::Message::Information,
                                     mainWindow_);
         qDebug() << "Error:" << ollamaResponse.getErrorMessage();
