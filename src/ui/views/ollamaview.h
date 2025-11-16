@@ -39,6 +39,7 @@ class KateOllamaView
 
  private:
   QString getPrompt();
+  void autoFillRequest(QString prompt);
   void ollamaRequest(QString prompt);
 
  private:
