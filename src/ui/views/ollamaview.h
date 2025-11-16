@@ -17,13 +17,12 @@
 
 class KateOllamaPlugin;
 
-class KateOllamaView
-  : public QObject
-  , public KXMLGUIClient {
+class KateOllamaView : public QObject, public KXMLGUIClient {
+
   Q_OBJECT
+
  public:
-  explicit KateOllamaView(KateOllamaPlugin* plugin, KTextEditor::MainWindow* mainwindow,
-                          OllamaSystem* ollamaSystem);
+  explicit KateOllamaView(KateOllamaPlugin* plugin, KTextEditor::MainWindow* mainwindow);
   ~KateOllamaView();
 
   QObject* createToolWindow(KTextEditor::MainWindow* mainWindow);
@@ -32,8 +31,6 @@ class KateOllamaView
   void handle_onSinglePrompt();
   void handle_onFullPrompt();
   void handle_onPrintCommand();
-
-  void handle_ollamaRequestMetaDataChanged(OllamaResponse ollamaResponse);
   void handle_ollamaRequestGotResponse(OllamaResponse ollamaResponse);
   void handle_ollamaRequestFinished(OllamaResponse ollamaResponse);
 

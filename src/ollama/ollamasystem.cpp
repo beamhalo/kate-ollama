@@ -4,140 +4,112 @@
  *  SPDX-License-Identifier: LGPL-2.0-or-later
  */
 
+#include "src/ollama/ollamasystem.h"
+
+#include "src/plugin.h"
+
 // KF Headers
 #include <KLocalizedString>
 
-#include <QDebug>
+#include <QJsonArray>
 #include <QJsonObject>
 #include <QNetworkAccessManager>
 #include <QNetworkReply>
-#include <QObject>
 #include <QStringLiteral>
 
-#include "src/ollama/ollamadata.h"
-#include "src/ollama/ollamaresponse.h"
-#include "src/ollama/ollamasystem.h"
-
-OllamaSystem::OllamaSystem(QObject* parent) : parent(parent) {}
+OllamaSystem::OllamaSystem(QObject* parent) : QObject(parent),
+                                              m_plugin(nullptr),
+                                              m_net_models(new QNetworkAccessManager(this)),
+                                              m_net_requests(new QNetworkAccessManager(this)) {
+  connect(m_net_models, &QNetworkAccessManager::finished, this, &OllamaSystem::processModelsResponse);
+}
 
 OllamaSystem::~OllamaSystem() {}
 
-void OllamaSystem::fetchModels(OllamaData ollamaData) {
-  qDebug() << "ollamasystem is fetching models";
-  m_modelsList.clear();
-  QNetworkAccessManager* manager = new QNetworkAccessManager(parent);
-  connect(manager, &QNetworkAccessManager::finished, this, [this](QNetworkReply* reply) {
-    if (reply->error() == QNetworkReply::NoError) {
-      qDebug() << "ollamasystem got a reply from fetching models";
-      QByteArray responseData = reply->readAll();
-      QJsonDocument jsonDoc   = QJsonDocument::fromJson(responseData);
+void OllamaSystem::initialize(KateOllamaPlugin* plugin) {
+  m_plugin = plugin;
+  QUrl url = m_plugin->currentUrl();
+  url.setPath("/api/tags");
+  QNetworkRequest request(url);
+  m_net_models->get(request);
+}
 
-      if (jsonDoc.isObject()) {
-        qDebug() << "ollamasystem has a json object with models";
-        QJsonObject jsonObj = jsonDoc.object();
-        if (jsonObj.contains("models") && jsonObj["models"].isArray()) {
-          qDebug() << "ollamasystem identified models";
-          QJsonArray modelsArray = jsonObj["models"].toArray();
-
-          for (const QJsonValue& value : modelsArray) {
-            qDebug() << "ollamasystem appending model";
-            m_modelsList.append(value);
-          }
-          std::sort(m_modelsList.begin(), m_modelsList.end(),
-                    [](const QJsonValue& a, const QJsonValue& b) {
-                      return a.toObject()["name"].toString().toLower()
-                           < b.toObject()["name"].toString().toLower();
-                    });
+void OllamaSystem::processModelsResponse(QNetworkReply* reply) {
+  QStringList models;
+  if (reply->error() == QNetworkReply::NoError) {
+    QJsonDocument jsonDoc = QJsonDocument::fromJson(reply->readAll());
+    if (jsonDoc.isObject()) {
+      QJsonObject jsonObj = jsonDoc.object();
+      if (jsonObj.contains("models") && jsonObj["models"].isArray()) {
+        const QJsonArray modelsArray = jsonObj["models"].toArray();
+        for (const QJsonValue& value : modelsArray) {
+          QString name = value.toObject().value("name").toString();
+          models.append(name);
         }
       }
-
-      qDebug() << "ollamasystem is emitting signal that it fetched models";
-      emit signal_modelsListLoaded(m_modelsList);
-
-    } else {
-      qWarning() << "Error fetching model list:" << reply->errorString();
-      m_errors.append(i18n("Error fetching model list: %1", reply->errorString()));
-
-      emit signal_errorFetchingModelsList(
-          QString("Error fetching model list:").append(reply->errorString()));
     }
-    reply->deleteLater();
-  });
-
-  QUrl url(ollamaData.getOllamaUrl() + "/api/tags");
-  QNetworkRequest request(url);
-  manager->get(request);
-}
-
-void OllamaSystem::ollamaRequest(OllamaData ollamaData) {
-  QString sender = ollamaData.getSender();
-
-  QJsonObject json_data;
-  json_data = ollamaData.toJson();
-
-  QJsonDocument doc(json_data);
-
-  QNetworkAccessManager* manager = new QNetworkAccessManager(this);
-
-  QNetworkRequest request(QUrl(ollamaData.getOllamaUrl() + "/api/generate"));
-  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-
-  QNetworkReply* reply = manager->post(request, doc.toJson());
-
-  connect(reply, &QNetworkReply::metaDataChanged, this, [=, this]() {
-    OllamaResponse ollamaResponse;
-
-    ollamaResponse.setReceiver(sender);
-
-    emit signal_ollamaRequestMetaDataChanged(ollamaResponse);
-  });
-
-  connect(reply, &QNetworkReply::readyRead, this, [this, reply, sender]() {
-    QString responseChunk = reply->readAll();
-    QJsonDocument jsonDoc = QJsonDocument::fromJson(responseChunk.toUtf8());
-    QJsonObject jsonObj   = jsonDoc.object();
-
-    if (jsonObj.contains("response")) {
-      OllamaResponse ollamaResponse;
-
-      ollamaResponse.setReceiver(sender);
-      ollamaResponse.setResponseText(jsonObj["response"].toString());
-
-      emit signal_ollamaRequestGotResponse(ollamaResponse);
-    }
-  });
-
-  connect(reply, &QNetworkReply::finished, this, [=, this]() {
-    OllamaResponse ollamaResponse;
-
-    if (reply->error() != QNetworkReply::NoError) {
-      ollamaResponse.setErrorMessage(reply->errorString());
-
-      qDebug() << "Error:" << reply->errorString();
-      qDebug() << "Model:" << ollamaData.getModel();
-      qDebug() << "System prompt:" << ollamaData.getSystemPrompt();
-    }
-
-    QString sender = ollamaData.getSender();
-
-    ollamaResponse.setReceiver(sender);
-
-    emit signal_ollamaRequestFinished(ollamaResponse);
-    reply->deleteLater();
-  });
-}
-
-QString OllamaSystem::getPromptFromText(QString text) {
-  QRegularExpression re("// AI:(.*)");
-  QRegularExpressionMatchIterator matchIterator = re.globalMatch(text);
-
-  QString lastMatch;
-
-  while (matchIterator.hasNext()) {
-    QRegularExpressionMatch match = matchIterator.next();
-    lastMatch                     = match.captured(1).trimmed();
+    emit modelsListLoaded(models);
+  } else {
+    emit errorReceived(i18n("Error fetching model list: %1", reply->errorString()));
   }
-  qDebug() << "Ollama prompt:" << lastMatch;
-
-  return lastMatch;
+  reply->deleteLater();
 }
+
+QByteArray OllamaSystem::formatRequest(OllamaRequest req) {
+  QJsonObject json;
+  QString model = m_plugin->currentModel();
+  json.insert("model", QJsonValue(model));
+  json.insert("prompt", QJsonValue(req.prompt));
+  if (!req.suffix.isEmpty()) {
+    json.insert("suffix", QJsonValue(req.suffix));
+  }
+  const auto& mc = m_plugin->modelConfig(model);
+  if (!mc.systemPrompt.isEmpty()) {
+    json.insert("system", QJsonValue(mc.systemPrompt));
+  }
+  if (!mc.max_tokens.isEmpty()) {
+    json.insert("max_tokens", QJsonValue(mc.max_tokens));
+  }
+  return QJsonDocument(json).toJson();
+}
+
+OllamaResponse OllamaSystem::parseResponse(QByteArray data) {
+  OllamaResponse resp;
+  QJsonDocument jsonDoc = QJsonDocument::fromJson(data);
+  QJsonObject jsonObj = jsonDoc.object();
+  if (jsonObj.contains("response")) {
+    resp.responseText = jsonObj["response"].toString();
+  }
+  return resp;
+}
+
+void OllamaSystem::ollamaRequest(OllamaRequest req) {
+
+  Q_ASSERT(m_plugin);
+
+  QUrl url = m_plugin->currentUrl();
+  url.setPath("/api/generate");
+  QNetworkRequest request(url);
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+  QNetworkReply* reply = m_net_requests->post(request, formatRequest(req));
+
+  connect(reply, &QNetworkReply::readyRead, this, [this, reply]() {
+    if (reply->error() == QNetworkReply::NoError) {
+      QByteArray responseChunk = reply->readAll();
+      emit streamingResponse(parseResponse(responseChunk));
+    } else {
+      emit errorReceived(i18n("Error parsing response: %1", reply->errorString()));
+    }
+  });
+
+  connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+    if (reply->error() == QNetworkReply::NoError) {
+      QByteArray responseChunk = reply->readAll();
+      emit responseFinished(parseResponse(responseChunk));
+    } else {
+      emit errorReceived(i18n("Error parsing response: %1", reply->errorString()));
+    }
+    reply->deleteLater();
+  });
+}
+

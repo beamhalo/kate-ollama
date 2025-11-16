@@ -4,86 +4,75 @@
     SPDX-License-Identifier: LGPL-2.0-or-later
 */
 
-// KF headers
-#include <KActionCollection>
-#include <KConfigGroup>
-#include <KLocalizedString>
-#include <KPluginFactory>
-#include <KSharedConfig>
-#include <KTextEditor/Application>
-#include <KTextEditor/Document>
-#include <KTextEditor/Editor>
-#include <KTextEditor/MainWindow>
-#include <KTextEditor/Message>
-#include <KTextEditor/Plugin>
-#include <KTextEditor/View>
-#include <KXMLGUIClient>
-#include <KXMLGUIFactory>
-
-#include <ktexteditor/message.h>
-#include <qcontainerfwd.h>
-#include <QAction>
-#include <QDebug>
-#include <QJsonDocument>
-#include <QJsonObject>
-#include <QMenu>
-#include <QNetworkAccessManager>
-#include <QNetworkReply>
-#include <QNetworkRequest>
-#include <QRegularExpression>
-#include <QString>
-
-#include <QLabel>
-#include <QVBoxLayout>
-#include <QVector>
-#include <QWidget>
-
 #include "plugin.h"
-#include "ollama/ollamasystem.h"
-
 #include "settings.h"
-#include "ollama/ollamadata.h"
+
 #include "ollama/ollamasystem.h"
 #include "ui/views/ollamaview.h"
 #include "ui/widgets/toolwidget.h"
 
+// KF headers
+#include <KConfigGroup>
+#include <KLocalizedString>
+#include <KPluginFactory>
+#include <KSharedConfig>
+#include <KTextEditor/Plugin>
+
 using namespace Qt::Literals::StringLiterals;
 
-K_PLUGIN_FACTORY_WITH_JSON(KateOllamaFactory, "kateollama.json",
-                           registerPlugin<KateOllamaPlugin>();)
+K_PLUGIN_FACTORY_WITH_JSON(KateOllamaFactory, "kateollama.json", registerPlugin<KateOllamaPlugin>();)
 
-enum MessageType { Log, Info, Warn, Error };
-
-KateOllamaPlugin::KateOllamaPlugin(QObject* parent, const QVariantList&)
-  : KTextEditor::Plugin(parent) {
-  ollamaSystem_ = new OllamaSystem(this);
+KateOllamaPlugin::KateOllamaPlugin(QObject* parent, const QVariantList&) : KTextEditor::Plugin(parent) {
+  readSettings();
+  m_ollama_system = new OllamaSystem(this);
+  fetchModelList();
 }
 
 QObject* KateOllamaPlugin::createToolWindow(KTextEditor::MainWindow* mainWindow) {
-  return new OllamaToolWidget(this, mainWindow, ollamaSystem_);
+  return new OllamaToolWidget(this, mainWindow);
 }
 
 QObject* KateOllamaPlugin::createView(KTextEditor::MainWindow* mainwindow) {
-  return new KateOllamaView(this, mainwindow, ollamaSystem_);
+  if (!m_delayed_initialization_errors.isEmpty()) {
+    QVariantMap vm;
+    vm["category"] = "Ollama";
+    vm["type"] = "Warning";
+    vm["text"] = "\n -" + m_delayed_initialization_errors.join("\n -");
+    mainwindow->showMessage(vm);
+  }
+  return new KateOllamaView(this, mainwindow);
 }
 
 KTextEditor::ConfigPage* KateOllamaPlugin::configPage(int number, QWidget* parent) {
   if (number != 0) {
     return nullptr;
   }
-  return new KateOllamaConfigPage(parent, this);
+  m_config_page = new KateOllamaConfigPage(parent, this);
+  return m_config_page;
 }
 
-void KateOllamaPlugin::setModel(QString model) { model_ = model; }
-QString KateOllamaPlugin::getModel() { return model_; }
+void KateOllamaPlugin::readSettings() {
+  KConfigGroup group(KSharedConfig::openConfig(), "KateOllama");
 
-void KateOllamaPlugin::setSystemPrompt(QString systemPrompt) { systemPrompt_ = systemPrompt; }
-QString KateOllamaPlugin::getSystemPrompt() { return systemPrompt_; }
+  m_ollama_url = group.readEntry("URL", "http://localhost:11434");
+  m_ollama_model = group.readEntry("Model");
 
-void KateOllamaPlugin::setOllamaUrl(QString ollamaUrl) { ollamaUrl_ = ollamaUrl; }
-QString KateOllamaPlugin::getOllamaUrl() { return ollamaUrl_; }
+}
 
-void KateOllamaPlugin::setOllamaData(OllamaData ollamaData) { ollamaData_ = ollamaData; }
-OllamaData KateOllamaPlugin::getOllamaData() { return ollamaData_; }
+void KateOllamaPlugin::fetchModelList() {
+  connect(m_ollama_system, &OllamaSystem::modelsListLoaded, this, [this] (QStringList modelsList) {
+    for (const QString& model: modelsList){
+      m_model_settings[model] = OllamaModelSettings{};
+    }
+    if (m_model_settings.isEmpty()) {
+      m_delayed_initialization_errors << i18n("Ollama: No models found.");
+    } else if (!m_model_settings.contains(m_ollama_model)) {
+      m_delayed_initialization_errors << i18n("Ollama: Model %1 not found.").arg(m_ollama_model);
+      m_ollama_model = m_model_settings.begin().key();
+      m_delayed_initialization_errors << i18n("Ollama: Selected %1 instead.").arg(m_ollama_model);;
+    }
+  });
+  m_ollama_system->initialize(this);
+}
 
 #include <plugin.moc>

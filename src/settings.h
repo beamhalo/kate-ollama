@@ -7,6 +7,8 @@
 #ifndef KATEOLLAMACONFIGPAGE_H
 #define KATEOLLAMACONFIGPAGE_H
 
+#include "src/ollama/ollamamodelsettings.h"
+
 #include <KTextEditor/ConfigPage>
 
 class KateOllamaPlugin;
@@ -22,15 +24,10 @@ class KateOllamaConfigPage : public KTextEditor::ConfigPage {
  public:
   explicit KateOllamaConfigPage(QWidget* parent = nullptr, KateOllamaPlugin* plugin = nullptr);
 
-  void loadSettings();
-  void fetchModelList();
-
  public:
   QString name() const override;
   QString fullName() const override;
   QIcon icon() const override;
-
- public:
   void apply() override;
   void defaults() override;
   void reset() override;

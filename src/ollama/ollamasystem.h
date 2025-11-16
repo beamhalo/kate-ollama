@@ -6,36 +6,49 @@
 #ifndef OLLAMASYSTEM_H
 #define OLLAMASYSTEM_H
 
-#include <QJsonArray>
-#include <QObject>
-
-#include "src/ollama/ollamadata.h"
+#include "src/ollama/ollamamodelsettings.h"
+#include "src/ollama/ollamarequest.h"
 #include "src/ollama/ollamaresponse.h"
 
+#include <QMap>
+#include <QObject>
+
+class QNetworkAccessManager;
+class QNetworkReply;
+class KateOllamaPlugin;
+
 class OllamaSystem : public QObject {
+
   Q_OBJECT
 
  public:
-  OllamaSystem(QObject* parent);
+  OllamaSystem(QObject*);
   ~OllamaSystem();
 
-  void fetchModels(OllamaData ollamaData);
-  void ollamaRequest(OllamaData data);
-  QString getPromptFromText(QString text);
+ public slots:
+  void initialize(KateOllamaPlugin*);
+  void ollamaRequest(OllamaRequest);
 
- signals:
-  void signal_modelsListLoaded(const QList<QJsonValue>& modelsList);
-  void signal_errorFetchingModelsList(QString error);
-
-  void signal_ollamaRequestMetaDataChanged(OllamaResponse ollamaResponse);
-  void signal_ollamaRequestGotResponse(OllamaResponse ollamaResponse);
-  void signal_ollamaRequestFinished(OllamaResponse ollamaResponse);
+ private slots:
+  void processModelsResponse(QNetworkReply*);
 
  private:
-  QObject* parent = nullptr;
-  QList<QJsonValue> m_modelsList;
-  QStringList m_errors;
+  QByteArray formatRequest(OllamaRequest);
+  OllamaResponse parseResponse(QByteArray);
+
+ signals:
+  void modelsListLoaded(QStringList);
+  void errorReceived(QString);
+  void streamingResponse(OllamaResponse);
+  void responseFinished(OllamaResponse);
+
+ private:
+  KateOllamaPlugin* m_plugin;
   QStringList m_messages;
+  QStringList m_errors;
+  QNetworkAccessManager* m_net_models;
+  QNetworkAccessManager* m_net_requests;
+
 };
 
 #endif // OLLAMASYSTEM_H

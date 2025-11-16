@@ -39,7 +39,6 @@
 #include <QWidget>
 
 #include "src/ollama//ollamasystem.h"
-#include "src/ollama/ollamadata.h"
 #include "src/ollama/ollamaglobals.h"
 #include "src/ollama/ollamaresponse.h"
 #include "src/plugin.h"
@@ -49,15 +48,10 @@
 
 using namespace Qt::Literals::StringLiterals;
 
-KateOllamaView::KateOllamaView(KateOllamaPlugin* plugin, KTextEditor::MainWindow* mainwindow,
-                               OllamaSystem* ollamaSystem)
-  : KXMLGUIClient(), plugin_(plugin), mainWindow_(mainwindow), ollamaSystem_(ollamaSystem) {
-  KXMLGUIClient::setComponentName(u"kateollama"_s, i18n("Kate-Ollama"));
-  KConfigGroup group(KSharedConfig::openConfig(), "KateOllama");
+KateOllamaView::KateOllamaView(KateOllamaPlugin* plugin, KTextEditor::MainWindow* mainwindow) :
+ KXMLGUIClient(), plugin_(plugin), mainWindow_(mainwindow), ollamaSystem_(plugin->getOllama()) {
 
-  plugin_->setModel(group.readEntry("Model"));
-  plugin_->setSystemPrompt(group.readEntry("SystemPrompt"));
-  plugin_->setOllamaUrl(group.readEntry("URL"));
+  KXMLGUIClient::setComponentName(u"kateollama"_s, i18n("Kate-Ollama"));
 
   auto ac    = actionCollection();
   QAction* a = ac->addAction(QStringLiteral("kateollama"));
@@ -84,18 +78,17 @@ KateOllamaView::KateOllamaView(KateOllamaPlugin* plugin, KTextEditor::MainWindow
       plugin, "ollamatoolwidget", KTextEditor::MainWindow::Bottom,
       QIcon::fromTheme(OllamaGlobals::IconName), OllamaGlobals::PluginName);
 
-  toolWidget_ = new OllamaToolWidget(plugin_, mainWindow_, ollamaSystem_, toolview);
+  toolWidget_ = new OllamaToolWidget(plugin_, mainWindow_, toolview);
 
   toolview_.reset(toolview);
 
-  connect(ollamaSystem_, &OllamaSystem::signal_ollamaRequestMetaDataChanged, this,
-          &KateOllamaView::handle_ollamaRequestMetaDataChanged);
+  connect(ollamaSystem_, &OllamaSystem::streamingResponse, this, &KateOllamaView::handle_ollamaRequestGotResponse);
 
-  connect(ollamaSystem_, &OllamaSystem::signal_ollamaRequestGotResponse, this,
-          &KateOllamaView::handle_ollamaRequestGotResponse);
+  connect(ollamaSystem_, &OllamaSystem::responseFinished, this, &KateOllamaView::handle_ollamaRequestFinished);
 
-  connect(ollamaSystem_, &OllamaSystem::signal_ollamaRequestFinished, this,
-          &KateOllamaView::handle_ollamaRequestFinished);
+  connect(ollamaSystem_, &OllamaSystem::errorReceived, [this](QString error){
+    Messages::showStatusMessage(error, KTextEditor::Message::Error, mainWindow_);
+  });
 }
 
 KateOllamaView::~KateOllamaView() { mainWindow_->guiFactory()->removeClient(this); }
@@ -134,36 +127,19 @@ void KateOllamaView::handle_onPrintCommand() {
   }
 }
 
-void KateOllamaView::handle_ollamaRequestMetaDataChanged(OllamaResponse ollamaResponse) {
-  if (ollamaResponse.getReceiver() == "editor" || ollamaResponse.getReceiver() == "") {
-    KTextEditor::View* view         = mainWindow_->activeView();
-    KTextEditor::Document* document = view->document();
-    KTextEditor::Cursor cursor      = view->cursorPosition();
-    //document->insertText(cursor, "\n");
-  }
-}
-
 void KateOllamaView::handle_ollamaRequestGotResponse(OllamaResponse ollamaResponse) {
-  if (ollamaResponse.getReceiver() != "editor" && ollamaResponse.getReceiver() != "")
+  KTextEditor::View* view = mainWindow_->activeView();
+  if (!view) {
     return;
-
-  KTextEditor::View* view         = mainWindow_->activeView();
+  }
   KTextEditor::Document* document = view->document();
-  KTextEditor::Cursor cursor      = view->cursorPosition();
-  document->insertText(cursor, ollamaResponse.getResponseText());
+  KTextEditor::Cursor cursor = view->cursorPosition();
+  document->insertText(cursor, ollamaResponse.responseText);
 }
 
-void KateOllamaView::handle_ollamaRequestFinished(OllamaResponse ollamaResponse) {
-  if (ollamaResponse.getErrorMessage() != QString("")) {
-    Messages::showStatusMessage(ollamaResponse.getErrorMessage(),
-                                KTextEditor::Message::Error, mainWindow_);
-  }
-  if (ollamaResponse.getReceiver() == "editor" || ollamaResponse.getReceiver() == "") {
-    KTextEditor::View* view         = mainWindow_->activeView();
-    KTextEditor::Document* document = view->document();
-    KTextEditor::Cursor cursor      = view->cursorPosition();
-    //document->insertText(cursor, "\n");
-  }
+void KateOllamaView::handle_ollamaRequestFinished(OllamaResponse) {
+  Messages::showStatusMessage(QStringLiteral("Model response complete ..."),
+                              KTextEditor::Message::Information, mainWindow_);
 }
 
 QString KateOllamaView::getPrompt() {
@@ -184,64 +160,31 @@ QString KateOllamaView::getPrompt() {
 }
 
 void KateOllamaView::autoFillRequest(QString) {
-  Messages::showStatusMessage(QStringLiteral("Wait for model insertion..."),
-                              KTextEditor::Message::Information, mainWindow_);
-  OllamaData data;
   KTextEditor::View* view = mainWindow_->activeView();
   if (!view) {
     return;
   }
+  Messages::showStatusMessage(QStringLiteral("Wait for model insertion..."),
+                              KTextEditor::Message::Information, mainWindow_);
   KTextEditor::Document* document = view->document();
   KTextEditor::Cursor cursor = view->cursorPosition();
   KTextEditor::Range range = document->documentRange();
   KTextEditor::Range before(range.start(), cursor);
   KTextEditor::Range after(cursor, range.end());
-  Q_ASSERT(document);
-  QString prefix = document->text(before);
-  QString suffix = document->text(after);
-  data.setSender("editor");
-  data.setOllamaUrl(plugin_->getOllamaUrl());
-  data.setModel(plugin_->getModel());
-  data.setPrompt(prefix);
-  data.setSuffix(suffix);
-
-
-  // data.setFormat("");
-  // data.setOptions("");
-  data.setSystemPrompt(plugin_->getSystemPrompt() + " Your task is completing the missing code. Only write the minimum required to do the job. Do not include examples or explanations.");
-  // data.setContext("");
-  // data.setStream("");
-
-  ollamaSystem_->ollamaRequest(data);
+  OllamaRequest request;
+  request.prompt = document->text(before);
+  request.suffix = document->text(after);
+  ollamaSystem_->ollamaRequest(request);
 }
 
 void KateOllamaView::ollamaRequest(QString prompt) {
-  Messages::showStatusMessage(QStringLiteral("Wait for model response..."),
-                              KTextEditor::Message::Information, mainWindow_);
-
-  QJsonObject json_data;
-  OllamaData data;
-  QVector<QString> images;
-
-  data.setSender("editor");
-  data.setOllamaUrl(plugin_->getOllamaUrl());
-  data.setModel(plugin_->getModel());
-  data.setPrompt(prompt);
-  data.setSuffix("");
-
-  for (int i = 0; i < images.size(); ++i) {
-    data.addImage(images[i]);
+  KTextEditor::View* view = mainWindow_->activeView();
+  if (!view) {
+    return;
   }
-
-  // data.setFormat("");
-  // data.setOptions("");
-  data.setSystemPrompt(plugin_->getSystemPrompt());
-  // data.setContext("");
-  // data.setStream("");
-
-  json_data = data.toJson();
-
-  QJsonDocument doc(json_data);
-
-  ollamaSystem_->ollamaRequest(data);
+  Messages::showStatusMessage(QStringLiteral("Wait for model insertion..."),
+                              KTextEditor::Message::Information, mainWindow_);
+  OllamaRequest request;
+  request.prompt = prompt;
+  ollamaSystem_->ollamaRequest(request);
 }

@@ -7,18 +7,12 @@
 #define OLLAMAGLOBALS_H
 
 #include <QIcon>
-#include <QObject>
 #include <QString>
 
-class OllamaGlobals : public QObject {
-  Q_OBJECT
-
- public:
+struct OllamaGlobals {
   static QString PluginName;
   static QString IconName;
-
   static QString HelpText;
-
   static QString LabelOllamaEndpointOverride;
 };
 

@@ -8,7 +8,6 @@
 #define KATEOLLAMAPLUGIN_H
 
 // KF headers
-#include "ollama/ollamadata.h"
 #include "ollama/ollamasystem.h"
 #include <KTextEditor/Document>
 #include <KTextEditor/MainWindow>
@@ -17,6 +16,8 @@
 #include <KTextEditor/View>
 #include <KXMLGUIClient>
 #include <QString>
+
+class KateOllamaConfigPage;
 
 class KateOllamaPlugin : public KTextEditor::Plugin {
   Q_OBJECT
@@ -29,29 +30,26 @@ class KateOllamaPlugin : public KTextEditor::Plugin {
 
   void readSettings();
 
+  void fetchModelList();
+
   int configPages() const override { return 1; }
 
   KTextEditor::ConfigPage* configPage(int number = 0, QWidget* parent = nullptr) override;
 
-  void setModel(QString model);
-  QString getModel();
+  QString currentModel() { return m_ollama_model; };
+  QUrl currentUrl() { return m_ollama_url; };
+  OllamaModelSettings modelConfig(QString model) { return m_model_settings.value(model); };
 
-  void setSystemPrompt(QString systemPrompt);
-  QString getSystemPrompt();
-
-  void setOllamaUrl(QString ollamaUrl);
-  QString getOllamaUrl();
-
-  void setOllamaData(OllamaData ollamaData);
-  OllamaData getOllamaData();
+  OllamaSystem* getOllama() { return m_ollama_system; }
 
  private:
-  QString model_;
-  QString systemPrompt_;
-  QString ollamaUrl_;
+  OllamaSystem* m_ollama_system;
+  KateOllamaConfigPage* m_config_page;
+  QString m_ollama_model;
+  QUrl m_ollama_url;
+  QMap<QString, OllamaModelSettings> m_model_settings;
+  QStringList m_delayed_initialization_errors;
 
-  OllamaData ollamaData_;
-  OllamaSystem* ollamaSystem_;
 };
 
 #endif // KATEOLLAMAPLUGIN_H

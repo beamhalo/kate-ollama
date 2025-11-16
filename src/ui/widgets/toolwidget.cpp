@@ -19,8 +19,8 @@
 #include "src/ui/widgets/toolwidget.h"
 
 OllamaToolWidget::OllamaToolWidget(KateOllamaPlugin* plugin, KTextEditor::MainWindow* mainWindow,
-                                   OllamaSystem* ollamaSystem, QWidget* parent)
-  : QWidget(parent), plugin_(plugin), mainWindow_(mainWindow), ollamaSystem_(ollamaSystem) {
+                                   QWidget* parent)
+  : QWidget(parent), plugin_(plugin), mainWindow_(mainWindow), ollamaSystem_(plugin->getOllama()) {
   new QVBoxLayout(this);
   layout()->setContentsMargins({});
   layout()->addWidget(&tabWidget_);

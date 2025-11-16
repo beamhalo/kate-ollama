@@ -43,21 +43,21 @@ class MainTab
   ~MainTab();
 
  public slots:
-  void handle_signalModelsListLoaded(const QList<QJsonValue>& modelsList);
+  // void handle_signalModelsListLoaded(const QList<QJsonValue>& modelsList);
   // void handle_signalOnSinglePrompt();
   // void handle_signalOnFullPrompt();
 
-  void handle_signalOllamaRequestMetaDataChanged(OllamaResponse ollamaResponse);
-  void handle_signalOllamaRequestGotResponse(OllamaResponse ollamaResponse);
-  void handle_signalOllamaRequestFinished(OllamaResponse ollamaResponse);
+ //  void handle_signalOllamaRequestMetaDataChanged(OllamaResponse ollamaResponse);
+ //  void handle_signalOllamaRequestGotResponse(OllamaResponse ollamaResponse);
+ //  void handle_signalOllamaRequestFinished(OllamaResponse ollamaResponse);
 
-  void handle_signal_textAreaInputEnterKeyWasPressed(QKeyEvent* event);
-  void handle_signalOutputInEditorClicked();
+ //  void handle_signal_textAreaInputEnterKeyWasPressed(QKeyEvent* event);
+ //  void handle_signalOutputInEditorClicked();
 
  private:
-  void loadModels();
-  QString getPrompt();
-  void ollamaRequest(QString prompt);
+ //  void loadModels();
+ //  QString getPrompt();
+ //  void ollamaRequest(QString prompt);
 
   bool outputInEditor_;
 

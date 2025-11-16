@@ -20,7 +20,7 @@ class OllamaToolWidget : public QWidget {
 
  public:
   explicit OllamaToolWidget(KateOllamaPlugin* plugin, KTextEditor::MainWindow* mainWindow,
-                            OllamaSystem* ollamaSystem, QWidget* parent = nullptr);
+                            QWidget* parent = nullptr);
 
   virtual ~OllamaToolWidget();
 

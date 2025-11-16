@@ -28,7 +28,6 @@
 #include <QVBoxLayout>
 #include <QWidget>
 
-#include "src/ollama/ollamadata.h"
 #include "src/ollama/ollamaglobals.h"
 #include "src/ollama/ollamaresponse.h"
 #include "src/ollama/ollamasystem.h"
@@ -77,7 +76,7 @@ MainTab::MainTab(KateOllamaPlugin* plugin, KTextEditor::MainWindow* mainWindow,
   label_override_ollama_endpoint_ = new QLabel(
       ki18n(OllamaGlobals::LabelOllamaEndpointOverride.toUtf8().data()).toString(), bottomWidget_);
   label_override_ollama_endpoint_->setFixedHeight(30);
-  line_edit_override_ollama_endpoint_ = new QLineEdit(plugin_->getOllamaUrl(), bottomWidget_);
+  line_edit_override_ollama_endpoint_ = new QLineEdit(plugin_->currentUrl().toString(), bottomWidget_);
   line_edit_override_ollama_endpoint_->setFixedHeight(30);
   outputInEditorPushButton_ =
       new QPushButton(QIcon::fromTheme(QStringLiteral("text-x-generic")),
@@ -95,7 +94,7 @@ MainTab::MainTab(KateOllamaPlugin* plugin, KTextEditor::MainWindow* mainWindow,
   mainLayout_->addWidget(bottomWidget_);
 
   setLayout(mainLayout_);
-
+/*
   connect(newTabBtn_, &QAbstractButton::clicked, parent, &OllamaToolWidget::newTab);
   connect(ollamaSystem_, &OllamaSystem::signal_modelsListLoaded, this,
           &MainTab::handle_signalModelsListLoaded);
@@ -112,11 +111,11 @@ MainTab::MainTab(KateOllamaPlugin* plugin, KTextEditor::MainWindow* mainWindow,
   connect(outputInEditorPushButton_, &QPushButton::clicked, this,
           &MainTab::handle_signalOutputInEditorClicked);
 
-  loadModels();
+  loadModels();*/
 }
 
 MainTab::~MainTab() {}
-
+/*
 void MainTab::handle_signalModelsListLoaded(const QList<QJsonValue>& modelsList) {
   int modelSelected = -1;
   modelsComboBox_->clear();
@@ -272,3 +271,4 @@ void MainTab::ollamaRequest(QString prompt) {
   // we need to connect to the response as that is asynchronous.
   ollamaSystem_->ollamaRequest(data);
 }
+*/

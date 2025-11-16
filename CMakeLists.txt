@@ -39,10 +39,11 @@ set(PROJECT_SOURCES
     src/ollama/ollamadata.cpp
     src/ollama/ollamaglobals.h
     src/ollama/ollamaglobals.cpp
+    src/ollama/ollamarequest.h
     src/ollama/ollamaresponse.h
-    src/ollama/ollamaresponse.cpp
     src/ollama/ollamasystem.h
     src/ollama/ollamasystem.cpp
+    src/ollama/ollamamodelsettings.h
     src/ui/controls/qollamaplaintextedit.h
     src/ui/tabs/maintab.h
     src/ui/tabs/maintab.cpp
@@ -62,7 +63,8 @@ set(CMAKE_LIBRARY_OUTPUT_DIRECTORY ${CMAKE_BINARY_DIR}/plugins)
 kcoreaddons_add_plugin(kateollama INSTALL_NAMESPACE "kf6/ktexteditor")
 target_compile_definitions(kateollama PRIVATE TRANSLATION_DOMAIN="kateollama")
 target_link_libraries(kateollama PRIVATE KF6::I18n KF6::TextEditor)
-target_sources(kateollama PRIVATE ${PROJECT_SOURCES})
+target_sources(kateollama PRIVATE ${PROJECT_SOURCES}
+  src/ollama/ollamarequest.h)
 
 feature_summary(WHAT ALL INCLUDE_QUIET_PACKAGES
                          FATAL_ON_MISSING_REQUIRED_PACKAGES)
