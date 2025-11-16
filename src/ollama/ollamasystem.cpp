@@ -24,7 +24,7 @@ OllamaSystem::~OllamaSystem() {}
 
 void OllamaSystem::fetchModels(OllamaData ollamaData) {
   qDebug() << "ollamasystem is fetching models";
-
+  m_modelsList.clear();
   QNetworkAccessManager* manager = new QNetworkAccessManager(parent);
   connect(manager, &QNetworkAccessManager::finished, this, [this](QNetworkReply* reply) {
     if (reply->error() == QNetworkReply::NoError) {

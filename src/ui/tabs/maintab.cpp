@@ -119,6 +119,7 @@ MainTab::~MainTab() {}
 
 void MainTab::handle_signalModelsListLoaded(const QList<QJsonValue>& modelsList) {
   int modelSelected = -1;
+  modelsComboBox_->clear();
   for (const QJsonValue& modelValue : modelsList) {
     QJsonObject modelObj = modelValue.toObject();
     if (modelObj.contains("name")) {
