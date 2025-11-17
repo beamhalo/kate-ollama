@@ -35,10 +35,8 @@ find_package(
 )
 
 set(PROJECT_SOURCES
-    src/ollama/ollamadata.h
-    src/ollama/ollamadata.cpp
     src/ollama/ollamaglobals.h
-    src/ollama/ollamaglobals.cpp
+
     src/ollama/ollamarequest.h
     src/ollama/ollamaresponse.h
     src/ollama/ollamasystem.h

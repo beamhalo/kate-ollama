@@ -70,6 +70,7 @@ QByteArray OllamaSystem::formatRequest(OllamaRequest req) {
   if (!mc.max_tokens.isEmpty()) {
     json.insert("max_tokens", QJsonValue(mc.max_tokens));
   }
+  json.insert("temperature", QJsonValue(mc.temperature));
   return QJsonDocument(json).toJson();
 }
 

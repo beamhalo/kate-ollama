@@ -12,14 +12,24 @@
 #include <KTextEditor/ConfigPage>
 
 class KateOllamaPlugin;
-class QLabel;
+
 class QComboBox;
+class QDoubleSpinBox;
+class QLabel;
 class QLineEdit;
+class QTabWidget;
 class QTextEdit;
 class QWidget;
 
 class KateOllamaConfigPage : public KTextEditor::ConfigPage {
+
   Q_OBJECT
+
+  struct ModelTab {
+    QTextEdit* systemPrompt;
+    QLineEdit* maxTokens;
+    QDoubleSpinBox* temperature;
+  };
 
  public:
   explicit KateOllamaConfigPage(QWidget* parent = nullptr, KateOllamaPlugin* plugin = nullptr);
@@ -32,12 +42,17 @@ class KateOllamaConfigPage : public KTextEditor::ConfigPage {
   void defaults() override;
   void reset() override;
 
+  QUrl url();
+  QString model();
+  OllamaModelSettings settingsFor(QString);
+
  private:
   KateOllamaPlugin* const plugin_;
   QComboBox* modelsComboBox_;
-  QTextEdit* systemPromptEdit_;
   QLineEdit* ollamaURLText_;
-  QLabel* infoLabel_;
+  QTabWidget* m_tabwidget;
+  QMap<QString, ModelTab> m_tabs;
+
 };
 
 #endif // KATEOLLAMACONFIGPAGE_H

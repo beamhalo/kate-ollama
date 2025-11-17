@@ -28,7 +28,7 @@ class KateOllamaPlugin : public KTextEditor::Plugin {
   QObject* createToolWindow(KTextEditor::MainWindow* mainWindow);
   QObject* createView(KTextEditor::MainWindow* mainWindow) override;
 
-  void readSettings();
+  void readSettingsFromFile();
 
   void fetchModelList();
 
@@ -38,9 +38,13 @@ class KateOllamaPlugin : public KTextEditor::Plugin {
 
   QString currentModel() { return m_ollama_model; };
   QUrl currentUrl() { return m_ollama_url; };
+  QStringList models() { return m_model_settings.keys(); };
   OllamaModelSettings modelConfig(QString model) { return m_model_settings.value(model); };
 
   OllamaSystem* getOllama() { return m_ollama_system; }
+
+ public slots:
+  void readSettingsFromConfig();
 
  private:
   OllamaSystem* m_ollama_system;

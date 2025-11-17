@@ -23,7 +23,7 @@ using namespace Qt::Literals::StringLiterals;
 K_PLUGIN_FACTORY_WITH_JSON(KateOllamaFactory, "kateollama.json", registerPlugin<KateOllamaPlugin>();)
 
 KateOllamaPlugin::KateOllamaPlugin(QObject* parent, const QVariantList&) : KTextEditor::Plugin(parent) {
-  readSettings();
+  readSettingsFromFile();
   m_ollama_system = new OllamaSystem(this);
   fetchModelList();
 }
@@ -51,18 +51,30 @@ KTextEditor::ConfigPage* KateOllamaPlugin::configPage(int number, QWidget* paren
   return m_config_page;
 }
 
-void KateOllamaPlugin::readSettings() {
-  KConfigGroup group(KSharedConfig::openConfig(), "KateOllama");
+void KateOllamaPlugin::readSettingsFromConfig() {
+  m_ollama_url = m_config_page->url();
+  m_ollama_model = m_config_page->model();
+  for (const QString& model: m_model_settings.keys()) {
+    m_model_settings[model] = m_config_page->settingsFor(model);
+  }
+}
 
+void KateOllamaPlugin::readSettingsFromFile() {
+  KConfigGroup group(KSharedConfig::openConfig(), "KateOllama");
   m_ollama_url = group.readEntry("URL", "http://localhost:11434");
   m_ollama_model = group.readEntry("Model");
-
 }
 
 void KateOllamaPlugin::fetchModelList() {
   connect(m_ollama_system, &OllamaSystem::modelsListLoaded, this, [this] (QStringList modelsList) {
     for (const QString& model: modelsList){
       m_model_settings[model] = OllamaModelSettings{};
+      m_model_settings[model].systemPrompt =
+          "You are a smart programming assistant. You prefer clean, modern code when writing c++."
+          "You complete code based on the prompt and the surrounding code."
+          "Take care to seamlessly integrate your response with the code preceding and following it."
+          "Do not write comments. Do not write explanations. Do not write examples of any type."
+          "Write only the code needed to fulfill requirements.";
     }
     if (m_model_settings.isEmpty()) {
       m_delayed_initialization_errors << i18n("Ollama: No models found.");
