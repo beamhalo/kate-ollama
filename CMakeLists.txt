@@ -41,6 +41,7 @@ set(PROJECT_SOURCES
     src/ollama/ollamaresponse.h
     src/ollama/ollamasystem.h
     src/ollama/ollamasystem.cpp
+    src/ollama/ollamaglobals.cpp
     src/ollama/ollamamodelsettings.h
     src/ui/controls/qollamaplaintextedit.h
     src/ui/tabs/maintab.h

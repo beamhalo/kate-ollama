@@ -55,22 +55,17 @@ KateOllamaView::KateOllamaView(KateOllamaPlugin* plugin, KTextEditor::MainWindow
 
   auto ac    = actionCollection();
   QAction* a = ac->addAction(QStringLiteral("kateollama"));
-  a->setText(i18n("Run Ollama"));
+  a->setText(i18n("Run Ollama autofill"));
   a->setIcon(QIcon::fromTheme(QStringLiteral("debug-run")));
   KActionCollection::setDefaultShortcut(a, QKeySequence((Qt::CTRL | Qt::Key_Semicolon)));
-  connect(a, &QAction::triggered, this, &KateOllamaView::handle_onSinglePrompt);
+  connect(a, &QAction::triggered, this, &KateOllamaView::handle_onAutoFillPrompt);
 
   QAction* a2 = ac->addAction(QStringLiteral("kateollama-full-prompt"));
-  a2->setText(i18n("Run Ollama Full Text"));
-  a2->setIcon(QIcon::fromTheme(QStringLiteral("debug-run")));
+  a2->setText(i18n("Stop a runaway model"));
+  a2->setIcon(QIcon::fromTheme(QStringLiteral("debug-stop")));
   KActionCollection::setDefaultShortcut(a2,
                                         QKeySequence((Qt::CTRL | Qt::SHIFT | Qt::Key_Semicolon)));
-  connect(a2, &QAction::triggered, this, &KateOllamaView::handle_onFullPrompt);
-
-  QAction* a3 = ac->addAction(QStringLiteral("kateollama-command"));
-  a3->setText(i18n("Add Ollama Command"));
-  KActionCollection::setDefaultShortcut(a3, QKeySequence((Qt::CTRL | Qt::Key_Slash)));
-  connect(a3, &QAction::triggered, this, &KateOllamaView::handle_onPrintCommand);
+  connect(a2, &QAction::triggered, this, &KateOllamaView::handle_onEmergencyStop);
 
   mainWindow_->guiFactory()->addClient(this);
 
@@ -93,20 +88,7 @@ KateOllamaView::KateOllamaView(KateOllamaPlugin* plugin, KTextEditor::MainWindow
 
 KateOllamaView::~KateOllamaView() { mainWindow_->guiFactory()->removeClient(this); }
 
-void KateOllamaView::handle_onSinglePrompt() {
-  KTextEditor::View* view = mainWindow_->activeView();
-  if (view) {
-    QString prompt = KateOllamaView::getPrompt();
-    if (!prompt.isEmpty()) {
-      KateOllamaView::ollamaRequest(prompt);
-    }
-  } else {
-    Messages::showStatusMessage(QStringLiteral("No prompt source..."),
-                                KTextEditor::Message::Warning, mainWindow_);
-  }
-}
-
-void KateOllamaView::handle_onFullPrompt() {
+void KateOllamaView::handle_onAutoFillPrompt() {
   KTextEditor::View* view = mainWindow_->activeView();
   if (view) {
     KateOllamaView::autoFillRequest("");
@@ -116,15 +98,10 @@ void KateOllamaView::handle_onFullPrompt() {
   }
 }
 
-void KateOllamaView::handle_onPrintCommand() {
-  KTextEditor::View* view = mainWindow_->activeView();
-  ;
-  if (view) {
-    KTextEditor::Document* document = view->document();
-    QString text                    = document->text();
-    KTextEditor::Cursor cursor      = view->cursorPosition();
-    document->insertText(cursor, "// AI: ");
-  }
+void KateOllamaView::handle_onEmergencyStop() {
+  Messages::showStatusMessage(QStringLiteral("Force stopping model ..."),
+                              KTextEditor::Message::Warning, mainWindow_);
+  ollamaSystem_->killModel();
 }
 
 void KateOllamaView::handle_ollamaRequestGotResponse(OllamaResponse ollamaResponse) {
@@ -138,25 +115,8 @@ void KateOllamaView::handle_ollamaRequestGotResponse(OllamaResponse ollamaRespon
 }
 
 void KateOllamaView::handle_ollamaRequestFinished(OllamaResponse) {
-  Messages::showStatusMessage(QStringLiteral("Model response complete ..."),
+  Messages::showStatusMessage(QStringLiteral("Model response complete."),
                               KTextEditor::Message::Information, mainWindow_);
-}
-
-QString KateOllamaView::getPrompt() {
-  KTextEditor::View* view         = mainWindow_->activeView();
-  KTextEditor::Document* document = view->document();
-  QString text                    = document->text();
-
-  QRegularExpression re("// AI:(.*)");
-  QRegularExpressionMatchIterator matchIterator = re.globalMatch(text);
-
-  QString lastMatch;
-
-  while (matchIterator.hasNext()) {
-    QRegularExpressionMatch match = matchIterator.next();
-    lastMatch                     = match.captured(1).trimmed();
-  }
-  return lastMatch;
 }
 
 void KateOllamaView::autoFillRequest(QString) {
@@ -177,14 +137,3 @@ void KateOllamaView::autoFillRequest(QString) {
   ollamaSystem_->ollamaRequest(request);
 }
 
-void KateOllamaView::ollamaRequest(QString prompt) {
-  KTextEditor::View* view = mainWindow_->activeView();
-  if (!view) {
-    return;
-  }
-  Messages::showStatusMessage(QStringLiteral("Wait for model insertion..."),
-                              KTextEditor::Message::Information, mainWindow_);
-  OllamaRequest request;
-  request.prompt = prompt;
-  ollamaSystem_->ollamaRequest(request);
-}

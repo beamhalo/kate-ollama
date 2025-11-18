@@ -28,6 +28,7 @@ class OllamaSystem : public QObject {
  public slots:
   void initialize(KateOllamaPlugin*);
   void ollamaRequest(OllamaRequest);
+  void killModel();
 
  private slots:
   void processModelsResponse(QNetworkReply*);
@@ -48,6 +49,7 @@ class OllamaSystem : public QObject {
   QStringList m_errors;
   QNetworkAccessManager* m_net_models;
   QNetworkAccessManager* m_net_requests;
+  bool m_kill_requested = false;
 
 };
 

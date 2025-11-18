@@ -28,14 +28,12 @@ class KateOllamaView : public QObject, public KXMLGUIClient {
   QObject* createToolWindow(KTextEditor::MainWindow* mainWindow);
 
  private slots:
-  void handle_onSinglePrompt();
-  void handle_onFullPrompt();
-  void handle_onPrintCommand();
+  void handle_onAutoFillPrompt();
+  void handle_onEmergencyStop();
   void handle_ollamaRequestGotResponse(OllamaResponse ollamaResponse);
   void handle_ollamaRequestFinished(OllamaResponse ollamaResponse);
 
  private:
-  QString getPrompt();
   void autoFillRequest(QString prompt);
   void ollamaRequest(QString prompt);
 

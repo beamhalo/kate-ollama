@@ -88,6 +88,8 @@ void OllamaSystem::ollamaRequest(OllamaRequest req) {
 
   Q_ASSERT(m_plugin);
 
+  m_kill_requested = false;
+
   QUrl url = m_plugin->currentUrl();
   url.setPath("/api/generate");
   QNetworkRequest request(url);
@@ -96,6 +98,9 @@ void OllamaSystem::ollamaRequest(OllamaRequest req) {
 
   connect(reply, &QNetworkReply::readyRead, this, [this, reply]() {
     if (reply->error() == QNetworkReply::NoError) {
+      if (m_kill_requested) {
+        reply->abort();
+      }
       QByteArray responseChunk = reply->readAll();
       emit streamingResponse(parseResponse(responseChunk));
     } else {
@@ -114,3 +119,6 @@ void OllamaSystem::ollamaRequest(OllamaRequest req) {
   });
 }
 
+void OllamaSystem::killModel() {
+  m_kill_requested = true;
+}
