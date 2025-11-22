@@ -30,11 +30,16 @@ The more code around to imitate, the better.
 
 ## Installation instructions
 
-Build and install:
 
+Install dependencies (example for Fedora and co.)
+```
+sudo dnf install kf6-*-devel
+```
+
+Build and install:
 ```
 mkdir -p build && cd build
 cmake -DCMAKE_BUILD_TYPE=Debug -DCMAKE_INSTALL_PREFIX=/usr -DCMAKE_EXPORT_COMPILE_COMMANDS=1 -G Ninja ../
 ninja
-ninja install
+sudo ninja install
 ```
