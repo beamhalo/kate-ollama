@@ -28,13 +28,15 @@ class OllamaSystem : public QObject {
  public slots:
   void initialize(KateOllamaPlugin*);
   void ollamaRequest(OllamaRequest);
+  void ollamaChat(OllamaRequest);
   void killModel();
 
  private slots:
   void processModelsResponse(QNetworkReply*);
 
  private:
-  QByteArray formatRequest(OllamaRequest);
+  void extracted(OllamaRequest& req);
+  QByteArray formatRequest(const OllamaRequest&);
   OllamaResponse parseResponse(QByteArray);
 
  signals:
@@ -42,6 +44,7 @@ class OllamaSystem : public QObject {
   void errorReceived(QString);
   void streamingResponse(OllamaResponse);
   void responseFinished(OllamaResponse);
+  void chatResponseFinished(OllamaResponse);
 
  private:
   KateOllamaPlugin* m_plugin;
@@ -50,6 +53,7 @@ class OllamaSystem : public QObject {
   QNetworkAccessManager* m_net_models;
   QNetworkAccessManager* m_net_requests;
   bool m_kill_requested = false;
+  QString m_current_chat_response;
 
 };
 

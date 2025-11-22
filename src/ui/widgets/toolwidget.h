@@ -9,11 +9,16 @@
 #include <KTextEditor/MainWindow>
 
 #include <KXMLGUIClient>
-#include <QTabWidget>
-#include <QTextBrowser>
+#include <QTextBlockFormat>
+#include <QTextCharFormat>
 
 #include "src/ollama/ollamasystem.h"
 #include "src/plugin.h"
+
+class QLineEdit;
+class QPushButton;
+class QTextEdit;
+class QTextDocument;
 
 class OllamaToolWidget : public QWidget {
   Q_OBJECT
@@ -24,15 +29,30 @@ class OllamaToolWidget : public QWidget {
 
   virtual ~OllamaToolWidget();
 
-  // Add's a new tab
-  void newTab();
+ public slots:
+  void submit();
 
-  void onViewChanged(KTextEditor::View* v);
+  void erase();
+
+ private slots:
+  void response(OllamaResponse);
 
  private:
   KateOllamaPlugin* plugin_;
   KTextEditor::MainWindow* mainWindow_ = nullptr;
-  QTabWidget tabWidget_;
   OllamaSystem* ollamaSystem_;
+  QTextDocument* m_document;
+  QTextEdit* m_chat_view;
+  QLineEdit* m_chat_user;
+  QPushButton* m_submit_btn;
+  QPushButton* m_erase_history_btn;
+  QList<OllamaRequest::ChatMessage> m_history;
+  QTextBlockFormat m_asst_bfmt;
+  QTextCharFormat m_asst_cfmt;
+  QTextBlockFormat m_code_bfmt;
+  QTextCharFormat m_code_cfmt;
+  QTextBlockFormat m_user_bfmt;
+  QTextCharFormat m_user_cfmt;
+
 };
 #endif // OLLAMATOOLWIDGET_HEADER_H

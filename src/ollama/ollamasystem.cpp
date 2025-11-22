@@ -55,11 +55,23 @@ void OllamaSystem::processModelsResponse(QNetworkReply* reply) {
   reply->deleteLater();
 }
 
-QByteArray OllamaSystem::formatRequest(OllamaRequest req) {
+QByteArray OllamaSystem::formatRequest(const OllamaRequest& req) {
   QJsonObject json;
   QString model = m_plugin->currentModel();
   json.insert("model", QJsonValue(model));
-  json.insert("prompt", QJsonValue(req.prompt));
+  QJsonArray history;
+  for (const auto& msg: req.history) {
+    QJsonObject message;
+    message.insert("role", msg.role);
+    message.insert("content", msg.content);
+    history.append(message);
+  }
+  if (!history.isEmpty()) {
+    json.insert("messages", history);
+  }
+  if (!req.prompt.isEmpty()) {
+    json.insert("prompt", QJsonValue(req.prompt));
+  }
   if (!req.suffix.isEmpty()) {
     json.insert("suffix", QJsonValue(req.suffix));
   }
@@ -80,6 +92,8 @@ OllamaResponse OllamaSystem::parseResponse(QByteArray data) {
   QJsonObject jsonObj = jsonDoc.object();
   if (jsonObj.contains("response")) {
     resp.responseText = jsonObj["response"].toString();
+  } else if (jsonObj.contains("message")) {
+    resp.responseText = jsonObj.value("message").toObject().value("content").toString();
   }
   return resp;
 }
@@ -112,6 +126,46 @@ void OllamaSystem::ollamaRequest(OllamaRequest req) {
     if (reply->error() == QNetworkReply::NoError) {
       QByteArray responseChunk = reply->readAll();
       emit responseFinished(parseResponse(responseChunk));
+    } else {
+      emit errorReceived(i18n("Error parsing response: %1", reply->errorString()));
+    }
+    reply->deleteLater();
+  });
+}
+
+void OllamaSystem::ollamaChat(OllamaRequest req) {
+
+  Q_ASSERT(m_plugin);
+
+  m_kill_requested = false;
+  m_current_chat_response.clear();
+
+  QUrl url = m_plugin->currentUrl();
+  url.setPath("/api/chat");
+  QNetworkRequest request(url);
+  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
+  QNetworkReply* reply = m_net_requests->post(request, formatRequest(req));
+
+  connect(reply, &QNetworkReply::readyRead, this, [this, reply]() {
+    if (reply->error() == QNetworkReply::NoError) {
+      if (m_kill_requested) {
+        reply->abort();
+      }
+      QByteArray responseChunk = reply->readAll();
+      OllamaResponse resp = parseResponse(responseChunk);
+      m_current_chat_response.append(resp.responseText);
+    } else {
+      emit errorReceived(i18n("Error parsing response: %1", reply->errorString()));
+    }
+  });
+
+  connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+    if (reply->error() == QNetworkReply::NoError) {
+      QByteArray responseChunk = reply->readAll();
+      OllamaResponse resp = parseResponse(responseChunk);
+      m_current_chat_response.append(resp.responseText);
+      resp.responseText = m_current_chat_response;
+      emit chatResponseFinished(resp);
     } else {
       emit errorReceived(i18n("Error parsing response: %1", reply->errorString()));
     }
