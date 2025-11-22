@@ -18,11 +18,11 @@ The more code around to imitate, the better.
 
   * `Ctrl + Shift + ;`: when the model is going off on a tangent, you can stop it.
 
+* Separate chat widget, with history, for interacting with the model in the classic conversation style.
+  
 ## Planned Features
 
- * Tabbed panel (from the parent fork https://github.com/tfks/kate-ollama) lets the user query Ollama outside of the editor. Presently broken, will fix.
-
- * Improve UI of tabbed panel, giving it more chat like behavior, retaining the option of outputting straight to editor
+ * Improve UI of chat panel, option of pasting code straight to editor, maybe syntax highlight for code...
 
  * Wishlist: some features 'inspired' from qodeassist
 
