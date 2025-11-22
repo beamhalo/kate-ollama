@@ -3,14 +3,14 @@
 
 Experimental plugin to integrate LLM assistance in Kate via Ollama.
 
-## Current Features
-
-My primary use for this is for smart autocomplete, so this is, for now, the only feature.
-This is most effective when used as boilerplate generator for frequently written code, after you have written the skeleton.
+My primary use for this plugin is for smart autocomplete.
+This is most effective when used as boilerplate generator for frequently written code, after you have written a skeleton.
 
 Works decently with a smallish model, I tried with qwen2.5-coder:7b.
 The last comment before the cursor is typically taken into account.
 The more code around to imitate, the better.
+
+## Current Features
 
 * Fill-In-Middle based code generation, requires models supporting fill-in-middle through ollama (e.g. qwen2.5-coder, codestral)
 
