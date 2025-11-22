@@ -23,6 +23,8 @@ The more code around to imitate, the better.
 ## Planned Features
 
  * Improve UI of chat panel, option of pasting code straight to editor, maybe syntax highlight for code...
+ 
+ * Separate model selection and system prompt for completion vs chat
 
  * Wishlist: some features 'inspired' from qodeassist
 
