@@ -66,8 +66,6 @@ OllamaToolWidget::OllamaToolWidget(KateOllamaPlugin* plugin, KTextEditor::MainWi
   connect(ollamaSystem_, &OllamaSystem::responseFinished, this, &OllamaToolWidget::responseFinished);
 
   m_asst_bfmt.setAlignment(Qt::AlignLeft);
-  m_asst_bfmt.setLeftMargin(25);
-  m_asst_bfmt.setRightMargin(250);
   m_code_bfmt.setAlignment(Qt::AlignLeft);
   m_code_cfmt.setFontFamilies(QStringList("monospace"));
   m_user_bfmt.setAlignment(Qt::AlignRight);
