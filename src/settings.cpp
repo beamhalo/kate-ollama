@@ -22,10 +22,10 @@
 #include "src/ollama/ollamasystem.h"
 
 static const char defaultPrompt[] =
-    "You are a smart programming assistant. You prefer clean, modern code when writing c++."
-    "You complete code based on the prompt and the surrounding code."
-    "Take care to seamlessly integrate your response with the code preceding and following it."
-    "Do not write comments. Do not write explanations. Do not write examples of any type."
+    "You are a smart programming assistant. You prefer clean, modern code when writing c++. "
+    "You complete code based on the prompt and the surrounding code. "
+    "Take care to seamlessly integrate your response with the code preceding and following it. "
+    "Do not write comments. Do not write explanations. Do not write examples of any type. "
     "Write only the code needed to fulfill requirements.";
 
 KateOllamaConfigPage::KateOllamaConfigPage(QWidget* parent, KateOllamaPlugin* plugin)
@@ -45,28 +45,39 @@ KateOllamaConfigPage::KateOllamaConfigPage(QWidget* parent, KateOllamaPlugin* pl
   QObject::connect(ollamaURLText_, &QLineEdit::textEdited, this, &KateOllamaConfigPage::changed);
 
   m_tabwidget = new QTabWidget(this);
+  KConfigGroup group(KSharedConfig::openConfig(), "KateOllama");
+  modelsComboBox_->setCurrentText(group.readEntry("DefaultModel"));
+  KConfigGroup modelsettings(&group, "ModelSettings");
+  QWidget* seltab = nullptr;
   for (const QString& model: plugin_->models()) {
+    KConfigGroup modeltab(&group, "Settings_" + model);
     QWidget* tab = new QWidget(m_tabwidget);
     QFormLayout* tablayout = new QFormLayout(m_tabwidget);
     ModelTab tabwidgets;
     tabwidgets.systemPrompt = new QTextEdit(tab);
+    tabwidgets.systemPrompt->setText(modeltab.readEntry("Prompt", defaultPrompt));
     tablayout->addRow(i18n("System Prompt"), tabwidgets.systemPrompt);
     QObject::connect(tabwidgets.systemPrompt, &QTextEdit::textChanged, this, &KateOllamaConfigPage::changed);
     tabwidgets.maxTokens = new QLineEdit(tab);
+    tabwidgets.maxTokens->setText(modeltab.readEntry("MaxTokens", "128"));
     tabwidgets.maxTokens->setValidator(new QIntValidator(0, 2048, tabwidgets.maxTokens));
     tablayout->addRow(i18n("Max Tokens"), tabwidgets.maxTokens);
     QObject::connect(tabwidgets.maxTokens, &QLineEdit::textEdited, this, &KateOllamaConfigPage::changed);
     tabwidgets.temperature = new QDoubleSpinBox(tab);
     tabwidgets.temperature->setDecimals(1);
     tabwidgets.temperature->setRange(0, 2);
+    tabwidgets.temperature->setValue(modeltab.readEntry("Temperature", 0.5));
     tablayout->addRow(i18n("Temperature"), tabwidgets.temperature);
     QObject::connect(tabwidgets.temperature, &QDoubleSpinBox::valueChanged, this, &KateOllamaConfigPage::changed);
     tab->setLayout(tablayout);
     m_tabwidget->addTab(tab, model);
     m_tabs[model] = tabwidgets;
+    if (model == modelsComboBox_->currentText()) {
+      seltab = tab;
+    }
   }
   layout->addWidget(m_tabwidget);
-
+  m_tabwidget->setCurrentWidget(seltab);
   setLayout(layout);
 }
 
@@ -89,10 +100,12 @@ void KateOllamaConfigPage::apply() {
   KConfigGroup modelsettings(&group, "ModelSettings");
   for (const auto& [model, tab]: m_tabs.asKeyValueRange()) {
     KConfigGroup modeltab(&group, "Settings_" + model);
-    group.writeEntry("Prompt", tab.systemPrompt->toPlainText());
-    group.writeEntry("MaxTokens", tab.maxTokens->text());
-    group.writeEntry("Temperature", tab.temperature->text());
+    modeltab.writeEntry("Prompt", tab.systemPrompt->toPlainText());
+    modeltab.writeEntry("MaxTokens", tab.maxTokens->text());
+    modeltab.writeEntry("Temperature", tab.temperature->text());
+    modeltab.sync();
   }
+  modelsettings.sync();
   group.sync();
   plugin_->readSettingsFromConfig();
 }
@@ -116,10 +129,10 @@ QUrl KateOllamaConfigPage::url() { return ollamaURLText_->text(); }
 QString KateOllamaConfigPage::model() { return modelsComboBox_->currentText(); }
 
 OllamaModelSettings KateOllamaConfigPage::settingsFor(QString model) {
-  if (!m_tabs.contains("model")) {
+  if (!m_tabs.contains(model)) {
     return OllamaModelSettings{model, QString(defaultPrompt), QString("128"), 0.5};
   }
-  auto tab = m_tabs.value("model");
+  auto tab = m_tabs.value(model);
   return OllamaModelSettings{ model, tab.systemPrompt->toPlainText(),
                               tab.maxTokens->text(), tab.temperature->value() };
 }

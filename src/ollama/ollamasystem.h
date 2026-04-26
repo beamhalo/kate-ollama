@@ -27,8 +27,8 @@ class OllamaSystem : public QObject {
 
  public slots:
   void initialize(KateOllamaPlugin*);
-  void ollamaRequest(OllamaRequest);
-  void ollamaChat(OllamaRequest);
+  void autofill(const OllamaRequest&);
+  void chat(const OllamaRequest&);
   void killModel();
 
  private slots:
@@ -36,15 +36,15 @@ class OllamaSystem : public QObject {
 
  private:
   void extracted(OllamaRequest& req);
+  void request(const QUrl&, const OllamaRequest&);
   QByteArray formatRequest(const OllamaRequest&);
   OllamaResponse parseResponse(QByteArray);
 
  signals:
   void modelsListLoaded(QStringList);
   void errorReceived(QString);
-  void streamingResponse(OllamaResponse);
+  void responsePart(OllamaResponse);
   void responseFinished(OllamaResponse);
-  void chatResponseFinished(OllamaResponse);
 
  private:
   KateOllamaPlugin* m_plugin;

@@ -34,7 +34,7 @@ class KateOllamaView : public QObject, public KXMLGUIClient {
   void handle_ollamaRequestFinished(OllamaResponse ollamaResponse);
 
  private:
-  void autoFillRequest(QString prompt);
+  void autoFillRequest();
   void ollamaRequest(QString prompt);
 
  private:
@@ -43,6 +43,8 @@ class KateOllamaView : public QObject, public KXMLGUIClient {
   OllamaToolWidget* toolWidget_        = nullptr;
   std::unique_ptr<QWidget> toolview_;
   OllamaSystem* ollamaSystem_;
+  int request_id_ = 0;
+
 };
 
 #endif // KATEOLLAMAVIEW_H

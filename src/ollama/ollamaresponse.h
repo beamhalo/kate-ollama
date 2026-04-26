@@ -4,6 +4,7 @@
 #include <QString>
 
 struct OllamaResponse {
+  int context_id;
   QString responseText;
 };
 

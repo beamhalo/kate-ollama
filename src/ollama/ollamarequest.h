@@ -5,6 +5,7 @@
 #include <QString>
 
 struct OllamaRequest {
+  int context_id;
   struct ChatMessage {
     QString role;
     QString content;

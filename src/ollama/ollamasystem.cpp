@@ -98,34 +98,36 @@ OllamaResponse OllamaSystem::parseResponse(QByteArray data) {
   return resp;
 }
 
-void OllamaSystem::ollamaRequest(OllamaRequest req) {
+void OllamaSystem::request(const QUrl& url, const OllamaRequest& req) {
 
   Q_ASSERT(m_plugin);
 
   m_kill_requested = false;
 
-  QUrl url = m_plugin->currentUrl();
-  url.setPath("/api/generate");
   QNetworkRequest request(url);
   request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
   QNetworkReply* reply = m_net_requests->post(request, formatRequest(req));
-
-  connect(reply, &QNetworkReply::readyRead, this, [this, reply]() {
+  int id = req.context_id;
+  connect(reply, &QNetworkReply::readyRead, this, [this, id, reply]() {
     if (reply->error() == QNetworkReply::NoError) {
       if (m_kill_requested) {
         reply->abort();
       }
       QByteArray responseChunk = reply->readAll();
-      emit streamingResponse(parseResponse(responseChunk));
+      auto resp = parseResponse(responseChunk);
+      resp.context_id = id;
+      emit responsePart(resp);
     } else {
       emit errorReceived(i18n("Error parsing response: %1", reply->errorString()));
     }
   });
 
-  connect(reply, &QNetworkReply::finished, this, [this, reply]() {
+  connect(reply, &QNetworkReply::finished, this, [this, id, reply]() {
     if (reply->error() == QNetworkReply::NoError) {
       QByteArray responseChunk = reply->readAll();
-      emit responseFinished(parseResponse(responseChunk));
+      auto resp = parseResponse(responseChunk);
+      resp.context_id = id;
+      emit responseFinished(resp);
     } else {
       emit errorReceived(i18n("Error parsing response: %1", reply->errorString()));
     }
@@ -133,44 +135,16 @@ void OllamaSystem::ollamaRequest(OllamaRequest req) {
   });
 }
 
-void OllamaSystem::ollamaChat(OllamaRequest req) {
+void OllamaSystem::autofill(const OllamaRequest& req) {
+  QUrl url = m_plugin->currentUrl();
+  url.setPath("/api/generate");
+  request(url, req);
+}
 
-  Q_ASSERT(m_plugin);
-
-  m_kill_requested = false;
-  m_current_chat_response.clear();
-
+void OllamaSystem::chat(const OllamaRequest& req) {
   QUrl url = m_plugin->currentUrl();
   url.setPath("/api/chat");
-  QNetworkRequest request(url);
-  request.setHeader(QNetworkRequest::ContentTypeHeader, "application/json");
-  QNetworkReply* reply = m_net_requests->post(request, formatRequest(req));
-
-  connect(reply, &QNetworkReply::readyRead, this, [this, reply]() {
-    if (reply->error() == QNetworkReply::NoError) {
-      if (m_kill_requested) {
-        reply->abort();
-      }
-      QByteArray responseChunk = reply->readAll();
-      OllamaResponse resp = parseResponse(responseChunk);
-      m_current_chat_response.append(resp.responseText);
-    } else {
-      emit errorReceived(i18n("Error parsing response: %1", reply->errorString()));
-    }
-  });
-
-  connect(reply, &QNetworkReply::finished, this, [this, reply]() {
-    if (reply->error() == QNetworkReply::NoError) {
-      QByteArray responseChunk = reply->readAll();
-      OllamaResponse resp = parseResponse(responseChunk);
-      m_current_chat_response.append(resp.responseText);
-      resp.responseText = m_current_chat_response;
-      emit chatResponseFinished(resp);
-    } else {
-      emit errorReceived(i18n("Error parsing response: %1", reply->errorString()));
-    }
-    reply->deleteLater();
-  });
+  request(url, req);
 }
 
 void OllamaSystem::killModel() {

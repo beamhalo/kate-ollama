@@ -36,6 +36,7 @@ class OllamaToolWidget : public QWidget {
 
  private slots:
   void response(OllamaResponse);
+  void responseFinished(OllamaResponse);
 
  private:
   KateOllamaPlugin* plugin_;
@@ -44,8 +45,8 @@ class OllamaToolWidget : public QWidget {
   QTextDocument* m_document;
   QTextEdit* m_chat_view;
   QLineEdit* m_chat_user;
-  QPushButton* m_submit_btn;
-  QPushButton* m_erase_history_btn;
+  QAction* m_submit;
+  QAction* m_erase_history;
   QList<OllamaRequest::ChatMessage> m_history;
   QTextBlockFormat m_asst_bfmt;
   QTextCharFormat m_asst_cfmt;
@@ -53,6 +54,8 @@ class OllamaToolWidget : public QWidget {
   QTextCharFormat m_code_cfmt;
   QTextBlockFormat m_user_bfmt;
   QTextCharFormat m_user_cfmt;
+  int m_request_id = -1;
+  int m_cursor = 0;
 
 };
 #endif // OLLAMATOOLWIDGET_HEADER_H

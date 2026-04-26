@@ -17,6 +17,7 @@
 #include <QPushButton>
 #include <QScrollBar>
 #include <QTextBrowser>
+#include <QTextBlock>
 #include <QVBoxLayout>
 
 #include "src/ui/widgets/toolwidget.h"
@@ -35,21 +36,34 @@ OllamaToolWidget::OllamaToolWidget(KateOllamaPlugin* plugin, KTextEditor::MainWi
 
   auto hlay = new QHBoxLayout;
 
-  m_erase_history_btn = new QPushButton(QIcon::fromTheme("edit-delete"), "Erase history");
-  connect(m_erase_history_btn, &QPushButton::clicked, this, &OllamaToolWidget::erase);
-  hlay->addWidget(m_erase_history_btn);
+
+
+  m_submit = new QAction(QIcon::fromTheme("document-send"), "Send", this);
+  connect(m_submit, &QAction::triggered, this, &OllamaToolWidget::submit);
+  m_erase_history = new QAction(QIcon::fromTheme("edit-delete"), "Erase history", this);
+  connect(m_erase_history, &QAction::triggered, this, &OllamaToolWidget::erase);
 
   m_chat_user = new QLineEdit;
   m_chat_user->setPlaceholderText("Chat with ollama...");
-  connect(m_chat_user, &QLineEdit::returnPressed, this, &OllamaToolWidget::submit);
-  hlay->addWidget(m_chat_user);
+  connect(m_chat_user, &QLineEdit::returnPressed, m_submit, &QAction::trigger);
 
-  m_submit_btn = new QPushButton(QIcon::fromTheme("document-send"), "Send");
-  connect(m_submit_btn, &QPushButton::clicked, this, &OllamaToolWidget::submit);
-  hlay->addWidget(m_submit_btn);
+  auto erasebtn = new QPushButton;
+  erasebtn->setText(m_erase_history->text());
+  erasebtn->setIcon(m_erase_history->icon());
+  connect(erasebtn, &QPushButton::clicked, m_erase_history, &QAction::trigger);
+
+  auto submitbtn = new QPushButton;
+  submitbtn->setText(m_submit->text());
+  submitbtn->setIcon(m_submit->icon());
+  connect(submitbtn, &QPushButton::clicked, m_submit, &QAction::trigger);
+
+  hlay->addWidget(erasebtn);
+  hlay->addWidget(m_chat_user);
+  hlay->addWidget(submitbtn);
 
   vlay->addLayout(hlay);
-  connect(ollamaSystem_, &OllamaSystem::chatResponseFinished, this, &OllamaToolWidget::response);
+  connect(ollamaSystem_, &OllamaSystem::responsePart, this, &OllamaToolWidget::response);
+  connect(ollamaSystem_, &OllamaSystem::responseFinished, this, &OllamaToolWidget::responseFinished);
 
   m_asst_bfmt.setAlignment(Qt::AlignLeft);
   m_asst_bfmt.setLeftMargin(25);
@@ -69,15 +83,19 @@ void OllamaToolWidget::submit() {
   m_history.emplaceBack(QString("user"), m_chat_user->text());
   OllamaRequest req;
   req.history = m_history;
-  ollamaSystem_->ollamaChat(req);
+  req.context_id = --m_request_id;
+  ollamaSystem_->chat(req);
   QTextCursor cursor(m_document);
   cursor.movePosition(QTextCursor::End);
   cursor.insertBlock(m_user_bfmt, m_user_cfmt);
   cursor.insertText(m_chat_user->text());
   cursor.insertText(QString('\n'));
   m_chat_user->clear();
+  cursor.insertBlock(m_asst_bfmt, m_asst_cfmt);
+  m_cursor = cursor.position();
   auto qsb = m_chat_view->verticalScrollBar();
   qsb->setValue(qsb->maximum());
+  m_history.emplaceBack(QString("assistant"), QString());
 }
 
 void OllamaToolWidget::erase() {
@@ -86,12 +104,27 @@ void OllamaToolWidget::erase() {
 }
 
 void OllamaToolWidget::response(OllamaResponse resp) {
-  m_history.emplaceBack(QString("assistant"), resp.responseText);
+  if (resp.context_id != m_request_id) {
+    return;
+  }
+  m_history.back().content.append(resp.responseText);
   QTextCursor cursor(m_document);
   cursor.movePosition(QTextCursor::End);
-  cursor.insertBlock(m_asst_bfmt, m_asst_cfmt);
-  cursor.insertMarkdown(resp.responseText);
-  cursor.insertText(QString('\n'));
+  cursor.insertText(resp.responseText);
   auto qsb = m_chat_view->verticalScrollBar();
   qsb->setValue(qsb->maximum());
+}
+
+void OllamaToolWidget::responseFinished(OllamaResponse resp) {
+  if (resp.context_id != m_request_id) {
+    return;
+  }
+  response(resp);
+  QTextCursor cursor(m_document);
+  cursor.setPosition(m_cursor);
+  cursor.movePosition(QTextCursor::End, QTextCursor::KeepAnchor);
+  auto full = cursor.selectedText();
+  cursor.removeSelectedText();
+  cursor.insertBlock(m_asst_bfmt, m_asst_cfmt);
+  cursor.insertMarkdown(full);
 }
